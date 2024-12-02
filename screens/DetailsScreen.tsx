@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
 
-// Define the Movie interface
 interface Movie {
   title: string;
   year: number;
@@ -12,7 +11,6 @@ interface Movie {
   poster: string;
 }
 
-// Define the props for the DetailsScreen component
 interface DetailsScreenProps {
   route: {
     params: {
@@ -21,7 +19,6 @@ interface DetailsScreenProps {
   };
 }
 
-// Movie catalog with movie details
 const movieCatalog: Record<string, Movie> = {
   'Inception': {
     title: 'Inception',
@@ -50,9 +47,53 @@ const movieCatalog: Record<string, Movie> = {
     genre: 'War',
     poster: 'https://via.placeholder.com/150/0000FF/808080?text=Dunkirk',
   },
+  'The Dark Knight': {
+    title: 'The Dark Knight',
+    year: 2008,
+    synopsis: 'When the menace known as the Joker emerges from his mysterious past, he wreaks havoc and chaos on the people of Gotham.',
+    cast: ['Christian Bale', 'Heath Ledger', 'Aaron Eckhart'],
+    director: 'Christopher Nolan',
+    genre: 'Action',
+    poster: 'https://via.placeholder.com/150/0000FF/808080?text=The+Dark+Knight',
+  },
+  'Memento': {
+    title: 'Memento',
+    year: 2000,
+    synopsis: 'A man with short-term memory loss attempts to track down his wife\'s murderer.',
+    cast: ['Guy Pearce', 'Carrie-Anne Moss', 'Joe Pantoliano'],
+    director: 'Christopher Nolan',
+    genre: 'Thriller',
+    poster: 'https://via.placeholder.com/150/0000FF/808080?text=Memento',
+  },
+  'The Prestige': {
+    title: 'The Prestige',
+    year: 2006,
+    synopsis: 'After a tragic accident, two stage magicians engage in a battle to create the ultimate illusion while sacrificing everything they have to outwit each other.',
+    cast: ['Christian Bale', 'Hugh Jackman', 'Scarlett Johansson'],
+    director: 'Christopher Nolan',
+    genre: 'Drama',
+    poster: 'https://via.placeholder.com/150/0000FF/808080?text=The+Prestige',
+  },
+  'Tenet': {
+    title: 'Tenet',
+    year: 2020,
+    synopsis: 'Armed with only one word, Tenet, and fighting for the survival of the world, a Protagonist journeys through a twilight world of international espionage on a mission that will unfold in something beyond real time.',
+    cast: ['John David Washington', 'Robert Pattinson', 'Elizabeth Debicki'],
+    director: 'Christopher Nolan',
+    genre: 'Action',
+    poster: 'https://via.placeholder.com/150/0000FF/808080?text=Tenet',
+  },
+  'Batman Begins': {
+    title: 'Batman Begins',
+    year: 2005,
+    synopsis: 'After training with his mentor, Batman begins his fight to free crime-ridden Gotham City from corruption.',
+    cast: ['Christian Bale', 'Michael Caine', 'Ken Watanabe'],
+    director: 'Christopher Nolan',
+    genre: 'Action',
+    poster: 'https://via.placeholder.com/150/0000FF/808080?text=Batman+Begins',
+  },
 };
 
-// DetailsScreen component to display movie details
 const DetailsScreen: React.FC<DetailsScreenProps> = ({ route }) => {
   const { movie } = route.params;
   const movieDetails = movieCatalog[movie.title];
@@ -70,35 +111,34 @@ const DetailsScreen: React.FC<DetailsScreenProps> = ({ route }) => {
   );
 };
 
-// Styles for the DetailsScreen component
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
     backgroundColor: '#121212',
   },
+  details: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#FFFFFF',
+  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#ffffff',
     marginBottom: 10,
+    color: '#FFFFFF',
   },
   poster: {
-    width: '100%',
-    height: 300,
-    resizeMode: 'contain',
-    marginBottom: 20,
-  },
-  details: {
-    fontSize: 16,
-    color: '#cccccc',
-    marginBottom: 5,
+    width: 150,
+    height: 200,
+    marginBottom: 10,
   },
   synopsis: {
-    fontSize: 14,
-    color: '#aaaaaa',
-    marginTop: 10,
+    fontSize: 16,
+    marginBottom: 10,
+    color: '#FFFFFF',
   },
 });
-
 export default DetailsScreen;
+export { DetailsScreenProps };
