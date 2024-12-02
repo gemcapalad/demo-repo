@@ -1,112 +1,88 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Image, ScrollView, Animated } from 'react-native';
+import { StackScreenProps } from '@react-navigation/stack';
+import { RootStackParamList } from '../navigation/AppNavigator';
 
-interface Movie {
+type Movie = {
   title: string;
-  year: number;
-  synopsis: string;
-  cast: string[];
-  director: string;
+  overview: string;
+  release_date: string;
   genre: string;
   poster: string;
-}
-
-interface DetailsScreenProps {
-  route: {
-    params: {
-      movie: Movie;
-    };
-  };
-}
-
-const movieCatalog: Record<string, Movie> = {
-  'Inception': {
-    title: 'Inception',
-    year: 2010,
-    synopsis: 'A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.',
-    cast: ['Leonardo DiCaprio', 'Joseph Gordon-Levitt', 'Elliot Page'],
-    director: 'Christopher Nolan',
-    genre: 'Sci-Fi',
-    poster: 'https://via.placeholder.com/150/0000FF/808080?text=Inception',
-  },
-  'Interstellar': {
-    title: 'Interstellar',
-    year: 2014,
-    synopsis: 'A team of explorers travel through a wormhole in space in an attempt to ensure humanity\'s survival.',
-    cast: ['Matthew McConaughey', 'Anne Hathaway', 'Jessica Chastain'],
-    director: 'Christopher Nolan',
-    genre: 'Sci-Fi',
-    poster: 'https://via.placeholder.com/150/0000FF/808080?text=Interstellar',
-  },
-  'Dunkirk': {
-    title: 'Dunkirk',
-    year: 2017,
-    synopsis: 'Allied soldiers from Belgium, the British Empire and France are surrounded by the German Army, and evacuated during a fierce battle in World War II.',
-    cast: ['Fionn Whitehead', 'Barry Keoghan', 'Mark Rylance'],
-    director: 'Christopher Nolan',
-    genre: 'War',
-    poster: 'https://via.placeholder.com/150/0000FF/808080?text=Dunkirk',
-  },
-  'The Dark Knight': {
-    title: 'The Dark Knight',
-    year: 2008,
-    synopsis: 'When the menace known as the Joker emerges from his mysterious past, he wreaks havoc and chaos on the people of Gotham.',
-    cast: ['Christian Bale', 'Heath Ledger', 'Aaron Eckhart'],
-    director: 'Christopher Nolan',
-    genre: 'Action',
-    poster: 'https://via.placeholder.com/150/0000FF/808080?text=The+Dark+Knight',
-  },
-  'Memento': {
-    title: 'Memento',
-    year: 2000,
-    synopsis: 'A man with short-term memory loss attempts to track down his wife\'s murderer.',
-    cast: ['Guy Pearce', 'Carrie-Anne Moss', 'Joe Pantoliano'],
-    director: 'Christopher Nolan',
-    genre: 'Thriller',
-    poster: 'https://via.placeholder.com/150/0000FF/808080?text=Memento',
-  },
-  'The Prestige': {
-    title: 'The Prestige',
-    year: 2006,
-    synopsis: 'After a tragic accident, two stage magicians engage in a battle to create the ultimate illusion while sacrificing everything they have to outwit each other.',
-    cast: ['Christian Bale', 'Hugh Jackman', 'Scarlett Johansson'],
-    director: 'Christopher Nolan',
-    genre: 'Drama',
-    poster: 'https://via.placeholder.com/150/0000FF/808080?text=The+Prestige',
-  },
-  'Tenet': {
-    title: 'Tenet',
-    year: 2020,
-    synopsis: 'Armed with only one word, Tenet, and fighting for the survival of the world, a Protagonist journeys through a twilight world of international espionage on a mission that will unfold in something beyond real time.',
-    cast: ['John David Washington', 'Robert Pattinson', 'Elizabeth Debicki'],
-    director: 'Christopher Nolan',
-    genre: 'Action',
-    poster: 'https://via.placeholder.com/150/0000FF/808080?text=Tenet',
-  },
-  'Batman Begins': {
-    title: 'Batman Begins',
-    year: 2005,
-    synopsis: 'After training with his mentor, Batman begins his fight to free crime-ridden Gotham City from corruption.',
-    cast: ['Christian Bale', 'Michael Caine', 'Ken Watanabe'],
-    director: 'Christopher Nolan',
-    genre: 'Action',
-    poster: 'https://via.placeholder.com/150/0000FF/808080?text=Batman+Begins',
-  },
+  backdrop: string;
 };
 
+type DetailsScreenProps = StackScreenProps<RootStackParamList, 'Details'>;
+
+const API_KEY = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI2ZDFhODExZjIwYjEzOTA3Y2U3NTU3OWVjMGJjMGNjNiIsIm5iZiI6MTY2MzA2MDM1NC44NCwic3ViIjoiNjMyMDQ5ODI0MzUwMTEwMDdmOTg4M2UyIiwic2NvcGVzIjpbImFwaV9yZWFkIl0sInZlcnNpb24iOjF9._uqtLXljiOJnbJrm0PEEg84ggh-Yu31_XhJwIyUvNMI';
+
 const DetailsScreen: React.FC<DetailsScreenProps> = ({ route }) => {
-  const { movie } = route.params;
-  const movieDetails = movieCatalog[movie.title];
+  const { movieId } = route.params;
+  const [movie, setMovie] = useState<Movie | null>(null);
+  const fadeAnim = useState(new Animated.Value(0))[0];
+  const slideAnim = useState(new Animated.Value(50))[0];
+
+  useEffect(() => {
+    const fetchMovieDetails = async () => {
+      const url = `https://api.themoviedb.org/3/movie/${movieId}?language=en-US`;
+      const options = {
+        method: 'GET',
+        headers: {
+          accept: 'application/json',
+          Authorization: `Bearer ${API_KEY}`,
+        },
+      };
+
+      try {
+        const response = await fetch(url, options);
+        const data = await response.json();
+        setMovie({
+          title: data.title,
+          overview: data.overview,
+          release_date: data.release_date,
+          genre: data.genres.map((genre: { name: string }) => genre.name).join(', '),
+          poster: `https://image.tmdb.org/t/p/w500${data.poster_path}`,
+          backdrop: `https://image.tmdb.org/t/p/w500${data.backdrop_path}`,
+        });
+
+        Animated.parallel([
+          Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 2000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(slideAnim, {
+            toValue: 0,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      } catch (error) {
+        console.error('Error fetching movie details:', error);
+      }
+    };
+
+    fetchMovieDetails();
+  }, [movieId, fadeAnim, slideAnim]);
+
+  if (!movie) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.loadingText}>Loading...</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>{movieDetails.title}</Text>
-      <Image source={{ uri: movieDetails.poster }} style={styles.poster} />
-      <Text style={styles.details}>Year: {movieDetails.year}</Text>
-      <Text style={styles.details}>Genre: {movieDetails.genre}</Text>
-      <Text style={styles.details}>Director: {movieDetails.director}</Text>
-      <Text style={styles.details}>Cast: {movieDetails.cast.join(', ')}</Text>
-      <Text style={styles.synopsis}>{movieDetails.synopsis}</Text>
+      <Animated.Image source={{ uri: movie.backdrop }} style={[styles.backdrop, { opacity: fadeAnim }]} />
+      <Animated.View style={[styles.overlay, { transform: [{ translateY: slideAnim }] }]}>
+        <Text style={styles.title}>{movie.title}</Text>
+        <Image source={{ uri: movie.poster }} style={styles.poster} />
+        <Text style={styles.releaseDate}>Release Date: {movie.release_date}</Text>
+        <Text style={styles.genre}>Genre: {movie.genre}</Text>
+        <Text style={styles.overview}>{movie.overview}</Text>
+      </Animated.View>
     </ScrollView>
   );
 };
@@ -114,31 +90,59 @@ const DetailsScreen: React.FC<DetailsScreenProps> = ({ route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
     backgroundColor: '#121212',
   },
-  details: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#FFFFFF',
+  loadingText: {
+    color: '#fff',
+    textAlign: 'center',
+    marginTop: 20,
+    fontSize: 18,
+  },
+  backdrop: {
+    width: '100%',
+    height: 300,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    padding: 10,
+    marginTop: 300,
   },
   title: {
-    fontSize: 24,
+    color: '#fff',
+    fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#FFFFFF',
+    textAlign: 'center',
+    marginVertical: 10,
   },
   poster: {
-    width: 150,
-    height: 200,
-    marginBottom: 10,
+    width: '100%',
+    height: 300,
+    borderRadius: 10,
+    marginVertical: 10,
   },
-  synopsis: {
+  releaseDate: {
+    color: '#fff',
+    textAlign: 'center',
+    marginVertical: 5,
     fontSize: 16,
-    marginBottom: 10,
-    color: '#FFFFFF',
+  },
+  genre: {
+    color: '#fff',
+    textAlign: 'center',
+    marginVertical: 5,
+    fontSize: 16,
+  },
+  overview: {
+    color: '#fff',
+    margin: 10,
+    textAlign: 'justify',
+    fontSize: 16,
+    lineHeight: 24,
   },
 });
+
 export default DetailsScreen;
-export { DetailsScreenProps };

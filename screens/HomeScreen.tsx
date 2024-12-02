@@ -1,105 +1,151 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, Dimensions, FlatList, Image, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, TextInput } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../navigation/AppNavigator'; // Assuming the file is named 'RootStackParamList.tsx'
+import { Ionicons } from '@expo/vector-icons';
+import debounce from 'lodash.debounce';
 
-// Define the props for the HomeScreen component
-interface HomeScreenProps {
-  navigation: any;
-}
+const API_KEY = 'YOUR_API_KEY_HERE';
 
-// Movie data
-const movies = [
-  { id: '1', title: 'Inception', year: '2010', poster: 'https://via.placeholder.com/150/0000FF/808080?text=Inception' },
-  { id: '2', title: 'Interstellar', year: '2014', poster: 'https://via.placeholder.com/150/0000FF/808080?text=Interstellar' },
-  { id: '3', title: 'Dunkirk', year: '2017', poster: 'https://via.placeholder.com/150/0000FF/808080?text=Dunkirk' },
-  { id: '4', title: 'The Dark Knight', year: '2008', poster: 'https://via.placeholder.com/150/0000FF/808080?text=The+Dark+Knight' },
-  { id: '5', title: 'Memento', year: '2000', poster: 'https://via.placeholder.com/150/0000FF/808080?text=Memento' },
-  { id: '6', title: 'The Prestige', year: '2006', poster: 'https://via.placeholder.com/150/0000FF/808080?text=The+Prestige' },
-  { id: '7', title: 'Tenet', year: '2020', poster: 'https://via.placeholder.com/150/0000FF/808080?text=Tenet' },
-  { id: '8', title: 'Batman Begins', year: '2005', poster: 'https://via.placeholder.com/150/0000FF/808080?text=Batman+Begins' },
-];
+type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Details'>;
 
-// Constants for layout
-const numColumns = 2;
-const screenWidth = Dimensions.get('window').width;
-const posterWidth = (screenWidth - 40) / numColumns;
+const HomeScreen: React.FC = () => {
+  const [movies, setMovies] = useState<{ id: number; title: string; poster_path: string; release_date: string }[]>([]);
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const navigation = useNavigation<HomeScreenNavigationProp>();
 
-// HomeScreen component
-const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
-  const [searchQuery, setSearchQuery] = useState('');
+  useEffect(() => {
+    fetchMovies();
+  }, [page]);
 
-  // Filter movies based on search query
-  const filteredMovies = movies.filter(movie =>
-    movie.title.toLowerCase().includes(searchQuery.toLowerCase())
+  const fetchMovies = async () => {
+    const url = `https://api.themoviedb.org/3/discover/movie?include_adult=false&include_video=false&language=en-US&page=${page}&sort_by=popularity.desc`;
+    const options = {
+      method: 'GET',
+      headers: {
+        accept: 'application/json',
+        Authorization: `Bearer ${API_KEY}`
+      }
+    };
+
+    try {
+      const response = await fetch(url, options);
+      const data = await response.json();
+      if (data.results) {
+        setMovies((prevMovies) => [...prevMovies, ...data.results]);
+        setTotalPages(data.total_pages);
+      }
+    } catch (error) {
+      console.error('Error fetching movies:', error);
+    }
+  };
+
+  const loadMoreMovies = () => {
+    if (page < totalPages) {
+      setPage((prevPage) => prevPage + 1);
+    }
+  };
+
+  const navigateToDetails = (movieId: number) => {
+    navigation.navigate('Details', { movieId });
+  };
+
+  const handleSearch = useCallback(
+    debounce((text) => {
+      setSearch(text);
+    }, 300),
+    []
+  );
+
+  const renderItem = ({ item }: { item: { id: number; title: string; poster_path: string; release_date: string } }) => (
+    <TouchableOpacity style={styles.card} onPress={() => navigateToDetails(item.id)}>
+      <Image
+        source={{ uri: `https://image.tmdb.org/t/p/w500${item.poster_path}` }}
+        style={styles.poster}
+      />
+      <View style={styles.textContainer}>
+        <Text style={styles.title}>{item.title}</Text>
+        <Text style={styles.releaseDate}>{item.release_date}</Text>
+      </View>
+    </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Movies</Text>
-      <TextInput
-        style={styles.searchBar}
-        placeholder="Search movies..."
-        placeholderTextColor="#888"
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-      />
-      <FlatList
-        data={filteredMovies}
-        keyExtractor={item => item.id}
-        numColumns={numColumns}
-        renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => navigation.navigate('Details', { movie: item })}>
-            <View style={[styles.poster, { width: posterWidth }]}>
-              <Image
-                source={{ uri: item.poster }}
-                style={styles.image}
-                resizeMode="cover"
-              />
-            </View>
-            <Text style={styles.movieTitle}>{item.title}</Text>
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.searchBar}
+          placeholder="Search movies..."
+          placeholderTextColor="#888"
+          onChangeText={handleSearch}
+          value={search}
+        />
+        {search.length > 0 && (
+          <TouchableOpacity onPress={() => setSearch('')}>
+            <Ionicons name="close-circle" size={24} color="#888" />
           </TouchableOpacity>
         )}
+      </View>
+      <FlatList
+        data={movies.filter((movie) => movie.title.toLowerCase().includes(search.toLowerCase()))}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id.toString()}
+        numColumns={2}
+        columnWrapperStyle={styles.row}
+        onEndReached={loadMoreMovies}
+        onEndReachedThreshold={0.5}
       />
     </View>
   );
 };
 
-// Styles for the HomeScreen component
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    padding: 10,
     backgroundColor: '#121212',
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: 10,
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1e1e1e',
+    borderRadius: 5,
+    marginBottom: 20,
+    paddingHorizontal: 10,
   },
   searchBar: {
+    flex: 1,
     height: 40,
-    borderColor: '#888',
-    borderWidth: 1,
-    borderRadius: 5,
-    paddingHorizontal: 10,
-    color: '#ffffff',
-    marginBottom: 20,
+    color: '#fff',
+  },
+  row: {
+    justifyContent: 'space-between',
+  },
+  card: {
+    flex: 1,
+    margin: 5,
+    backgroundColor: '#1e1e1e',
+    borderRadius: 10,
+    overflow: 'hidden',
   },
   poster: {
-    height: 200,
-    backgroundColor: '#333', // Placeholder color
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  image: {
     width: '100%',
-    height: '100%',
+    height: 200,
   },
-  movieTitle: {
+  textContainer: {
+    padding: 10,
+  },
+  title: {
+    color: '#fff',
     fontSize: 16,
-    color: '#ffffff',
-    textAlign: 'center',
+    fontWeight: 'bold',
+  },
+  releaseDate: {
+    color: '#aaa',
+    fontSize: 14,
   },
 });
 
