@@ -6,7 +6,7 @@ import { RootStackParamList } from '../navigation/AppNavigator'; // Assuming the
 import { Ionicons } from '@expo/vector-icons';
 import debounce from 'lodash.debounce';
 
-const API_KEY = 'YOUR_API_KEY_HERE';
+const API_KEY = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI2ZDFhODExZjIwYjEzOTA3Y2U3NTU3OWVjMGJjMGNjNiIsIm5iZiI6MTY2MzA2MDM1NC44NCwic3ViIjoiNjMyMDQ5ODI0MzUwMTEwMDdmOTg4M2UyIiwic2NvcGVzIjpbImFwaV9yZWFkIl0sInZlcnNpb24iOjF9._uqtLXljiOJnbJrm0PEEg84ggh-Yu31_XhJwIyUvNMI';
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Details'>;
 
